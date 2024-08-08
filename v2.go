@@ -101,7 +101,7 @@ func (asn *AppStoreServerNotification) extractPublicKeyFromPayload(payload strin
 	}
 }
 
-func (asn *AppStoreServerNotification) parseJwtSignedPayload(payload string) error {
+func (asn *AppStoreServerNotification) ParseJwtSignedPayload(payload string) error {
 	// get root certificate from x5c header
 	rootCertStr, err := asn.extractHeaderByIndex(payload, 2)
 	if err != nil {
