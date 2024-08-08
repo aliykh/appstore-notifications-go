@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+
+	"github.com/golang-jwt/jwt"
 )
 
 func New(appleRootCert string) *AppStoreServerNotification {
