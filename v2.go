@@ -7,16 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
-
-	"github.com/golang-jwt/jwt"
 )
 
-func New(payload string, appleRootCert string) *AppStoreServerNotification {
+func New(appleRootCert string) *AppStoreServerNotification {
 	asn := &AppStoreServerNotification{}
 	asn.IsValid = false
 	asn.IsTest = false
 	asn.appleRootCert = appleRootCert
-	asn.parseJwtSignedPayload(payload)
 	return asn
 }
 
@@ -104,22 +101,22 @@ func (asn *AppStoreServerNotification) extractPublicKeyFromPayload(payload strin
 	}
 }
 
-func (asn *AppStoreServerNotification) parseJwtSignedPayload(payload string) {
+func (asn *AppStoreServerNotification) parseJwtSignedPayload(payload string) error {
 	// get root certificate from x5c header
 	rootCertStr, err := asn.extractHeaderByIndex(payload, 2)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// get intermediate certificate from x5c header
 	intermediateCertStr, err := asn.extractHeaderByIndex(payload, 1)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// verify certificates
 	if err = asn.verifyCertificate(rootCertStr, intermediateCertStr); err != nil {
-		panic(err)
+		return err
 	}
 
 	// payload data
@@ -128,14 +125,14 @@ func (asn *AppStoreServerNotification) parseJwtSignedPayload(payload string) {
 		return asn.extractPublicKeyFromPayload(payload)
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	asn.Payload = notificationPayload
 	asn.IsTest = asn.Payload.NotificationType == "TEST"
 
 	if asn.IsTest {
 		asn.IsValid = true
-		return
+		return err
 	}
 
 	// transaction info
@@ -145,7 +142,7 @@ func (asn *AppStoreServerNotification) parseJwtSignedPayload(payload string) {
 		return asn.extractPublicKeyFromPayload(payload)
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	asn.TransactionInfo = transactionInfo
 
@@ -156,10 +153,11 @@ func (asn *AppStoreServerNotification) parseJwtSignedPayload(payload string) {
 		return asn.extractPublicKeyFromPayload(payload)
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	asn.RenewalInfo = renewalInfo
 
 	// valid request
 	asn.IsValid = true
+	return nil
 }
